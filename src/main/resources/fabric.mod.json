@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "hoescleargrass",
+	"version": "${version}",
+	"name": "Hoe Pro",
+	"description": "Use your hoes like a pro!",
+	"authors": [
+		"Taylor"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/hoescleargrass/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.taylor.hoescleargrass.HoesClearGrass"
+		],
+		"client": [
+			"net.taylor.hoescleargrass.HoesClearGrassClient"
+		],
+		"fabric-datagen": [
+			"net.taylor.hoescleargrass.HoesClearGrassDataGenerator"
+		]
+	},
+	"mixins": [
+		"hoescleargrass.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.14.23",
+		"minecraft": "~1.20.1",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
