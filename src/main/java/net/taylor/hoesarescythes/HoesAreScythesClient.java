@@ -1,8 +1,8 @@
-package net.taylor.hoescleargrass;
+package net.taylor.hoesarescythes;
 
 import net.fabricmc.api.ClientModInitializer;
 
-public class HoesClearGrassClient implements ClientModInitializer {
+public class HoesAreScythesClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {

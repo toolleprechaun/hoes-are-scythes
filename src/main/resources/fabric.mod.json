@@ -1,9 +1,9 @@
 {
 	"schemaVersion": 1,
-	"id": "hoescleargrass",
+	"id": "hoes-are-scythes",
 	"version": "${version}",
-	"name": "Hoe Pro",
-	"description": "Use your hoes like a pro!",
+	"name": "Hoes Are Scythes",
+	"description": "Quickly clear up grass, flowers, crops and more with a hoe!",
 	"authors": [
 		"Taylor"
 	],
@@ -12,21 +12,21 @@
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/hoescleargrass/icon.png",
+	"icon": "*",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.taylor.hoescleargrass.HoesClearGrass"
+			"net.taylor.hoesarescythes.HoesAreScythes"
 		],
 		"client": [
-			"net.taylor.hoescleargrass.HoesClearGrassClient"
+			"net.taylor.hoesarescythes.HoesAreScythesClient"
 		],
 		"fabric-datagen": [
-			"net.taylor.hoescleargrass.HoesClearGrassDataGenerator"
+			"net.taylor.hoesarescythes.HoesAreScythesDataGenerator"
 		]
 	},
 	"mixins": [
-		"hoescleargrass.mixins.json"
+		"HoesAreScythes.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.14.23",
