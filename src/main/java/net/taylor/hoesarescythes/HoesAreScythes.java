@@ -11,7 +11,8 @@ public class HoesAreScythes implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-
-		LOGGER.info("Hello Fabric world!");
+		LOGGER.info("Initializing HoesAreScythes mod...");
+		ClearGrass.register();
+		LOGGER.info("HoesAreScythes mod initialized!");
 	}
 }
