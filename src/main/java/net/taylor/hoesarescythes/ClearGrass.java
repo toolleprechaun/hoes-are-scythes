@@ -26,6 +26,10 @@ public class ClearGrass {
 
             BlockState targetedBlock = world.getBlockState(blockPos);
 
+            if (player.isSneaking()) {
+                return ActionResult.PASS;
+            }
+
             if (stack.getItem() instanceof HoeItem &&
                     (targetedBlock.isIn(ModTags.Blocks.SCYTHE_BLOCKS) ||
                             targetedBlock.isIn(ModTags.Blocks.SCYTHE_BLOCKS_DROPPABLE) ||
