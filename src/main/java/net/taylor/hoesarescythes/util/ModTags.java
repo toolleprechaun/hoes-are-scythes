@@ -11,9 +11,6 @@ public class ModTags {
         public static final TagKey<Block> SCYTHE_BLOCKS =
                 createTag("scythe_blocks");
 
-        public static final TagKey<Block> SCYTHE_BLOCKS_DROPPABLE =
-                createTag("scythe_blocks_droppable");
-
         private static TagKey<Block> createTag(String name) {
             return TagKey.of(RegistryKeys.BLOCK, new Identifier(HoesAreScythes.MOD_ID, name));
         }
