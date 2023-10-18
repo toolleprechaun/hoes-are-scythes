@@ -8,6 +8,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
 import net.minecraft.item.ToolMaterials;
 import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Property;
 import net.minecraft.util.ActionResult;
@@ -58,14 +59,20 @@ public class ClearGrass {
     private static boolean tryBreakBlock(PlayerEntity playerEntity, World world, Hand hand, BlockPos targetPos, boolean isTargetingCrop, boolean isTargetingFullyGrownCrop, ItemStack stack) {
         BlockState targetState = world.getBlockState(targetPos);
 
-        if (shouldBreakBlock(isTargetingCrop, isTargetingFullyGrownCrop, targetState)) {
-            world.breakBlock(targetPos, true);
-            stack.damage(1, playerEntity, p -> p.sendToolBreakStatus(hand));
-            return true;
+        if (!shouldBreakBlock(isTargetingCrop, isTargetingFullyGrownCrop, targetState)) {
+            return false;
         }
 
-        return false;
+        if (playerEntity instanceof ServerPlayerEntity serverPlayer) {
+            serverPlayer.interactionManager.tryBreakBlock(targetPos);
+        } else {
+            world.breakBlock(targetPos, true);
+        }
+
+        stack.damage(1, playerEntity, p -> p.sendToolBreakStatus(hand));
+        return true;
     }
+
 
     private static int getRadiusBasedOnMaterial(ToolMaterial material) {
         if (material == ToolMaterials.WOOD || material == ToolMaterials.STONE) {
@@ -82,16 +89,18 @@ public class ClearGrass {
 
     private static boolean isFullyGrownCrop(BlockState blockState) {
         for (Property<?> property : blockState.getProperties()) {
-            if (property instanceof IntProperty ageProperty && property.getName().equals("age")) {
-                int age = blockState.get(ageProperty);
-                int maxAge = ageProperty.getValues().stream().max(Integer::compareTo).orElse(0);
-                if (age == maxAge) {
-                    return true;
-                }
+            if (!(property instanceof IntProperty ageProperty)) continue;
+            if (!property.getName().equals("age")) continue;
+
+            int age = blockState.get(ageProperty);
+            int maxAge = ageProperty.getValues().stream().max(Integer::compareTo).orElse(0);
+            if (age == maxAge) {
+                return true;
             }
         }
         return false;
     }
+
 
     private static boolean shouldBreakBlock(boolean isTargetingCrop, boolean isTargetingFullyGrownCrop, BlockState targetState) {
         if (isTargetingCrop && targetState.isIn(BlockTags.CROPS)) {
