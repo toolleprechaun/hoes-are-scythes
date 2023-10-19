@@ -2,6 +2,7 @@ package net.taylor.hoesarescythes;
 
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.HoeItem;
 import net.minecraft.item.ItemStack;
@@ -45,34 +46,17 @@ public class ClearGrass {
         boolean didWork = false;
         int radius = getRadiusBasedOnMaterial(((HoeItem) stack.getItem()).getMaterial());
         boolean isTargetingCrop = targetedBlock.isIn(BlockTags.CROPS);
-        boolean isTargetingFullyGrownCrop = isFullyGrownCrop(targetedBlock);
+        boolean isTargetingNetherWart = targetedBlock.isOf(Blocks.NETHER_WART);
+        boolean isTargetingFullyGrown = isFullyGrownCrop(targetedBlock);
 
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
-                didWork |= tryBreakBlock(playerEntity, world, hand, blockPos.add(x, 0, z), isTargetingCrop, isTargetingFullyGrownCrop, stack);
+                didWork |= tryBreakBlock(playerEntity, world, hand, blockPos.add(x, 0, z), isTargetingCrop, isTargetingNetherWart, isTargetingFullyGrown, stack);
             }
         }
 
         return didWork;
     }
-
-    private static boolean tryBreakBlock(PlayerEntity playerEntity, World world, Hand hand, BlockPos targetPos, boolean isTargetingCrop, boolean isTargetingFullyGrownCrop, ItemStack stack) {
-        BlockState targetState = world.getBlockState(targetPos);
-
-        if (!shouldBreakBlock(isTargetingCrop, isTargetingFullyGrownCrop, targetState)) {
-            return false;
-        }
-
-        if (playerEntity instanceof ServerPlayerEntity serverPlayer) {
-            serverPlayer.interactionManager.tryBreakBlock(targetPos);
-        } else {
-            world.breakBlock(targetPos, true);
-        }
-
-        stack.damage(1, playerEntity, p -> p.sendToolBreakStatus(hand));
-        return true;
-    }
-
 
     private static int getRadiusBasedOnMaterial(ToolMaterial material) {
         if (material == ToolMaterials.WOOD || material == ToolMaterials.STONE) {
@@ -85,7 +69,6 @@ public class ClearGrass {
             return 4;
         }
     }
-
 
     private static boolean isFullyGrownCrop(BlockState blockState) {
         for (Property<?> property : blockState.getProperties()) {
@@ -101,12 +84,33 @@ public class ClearGrass {
         return false;
     }
 
+    private static boolean tryBreakBlock(PlayerEntity playerEntity, World world, Hand hand, BlockPos targetPos, boolean isTargetingCrop, boolean isTargetingNetherWart, boolean isTargetingFullyGrown, ItemStack stack) {
+        BlockState targetState = world.getBlockState(targetPos);
 
-    private static boolean shouldBreakBlock(boolean isTargetingCrop, boolean isTargetingFullyGrownCrop, BlockState targetState) {
+        if (!shouldBreakBlock(isTargetingCrop, isTargetingFullyGrown, isTargetingNetherWart, targetState)) {
+            return false;
+        }
+
+        if (playerEntity instanceof ServerPlayerEntity serverPlayer) {
+            serverPlayer.interactionManager.tryBreakBlock(targetPos);
+        } else {
+            world.breakBlock(targetPos, true);
+        }
+
+        stack.damage(1, playerEntity, p -> p.sendToolBreakStatus(hand));
+        return true;
+    }
+
+    private static boolean shouldBreakBlock(boolean isTargetingCrop, boolean isTargetingFullyGrownCrop, boolean isTargetingNetherWart, BlockState targetState) {
         if (isTargetingCrop && targetState.isIn(BlockTags.CROPS)) {
             return !isTargetingFullyGrownCrop || isFullyGrownCrop(targetState);
-        } else return !isTargetingCrop && targetState.isIn(ModTags.Blocks.SCYTHE_BLOCKS);
+        } else if (isTargetingNetherWart && targetState.isOf(Blocks.NETHER_WART)) {
+            return !isTargetingFullyGrownCrop || isFullyGrownCrop(targetState);
+        } else {
+            return !isTargetingCrop && !isTargetingNetherWart && targetState.isIn(ModTags.Blocks.SCYTHE_BLOCKS);
+        }
     }
+
 
 }
 
