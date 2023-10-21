@@ -1,6 +1,7 @@
 package net.taylor.hoesarescythes;
 
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.player.PlayerEntity;
@@ -9,7 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
 import net.minecraft.item.ToolMaterials;
 import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Property;
 import net.minecraft.util.ActionResult;
@@ -19,6 +20,8 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.taylor.hoesarescythes.util.ModTags;
 
+import java.util.List;
+
 public class ClearGrass {
 
     public static void register() {
@@ -26,12 +29,12 @@ public class ClearGrass {
     }
 
     private static ActionResult handleAttackBlock(PlayerEntity playerEntity, World world, Hand hand, BlockPos blockPos, Direction direction) {
-
         if (world.isClient) {
             return ActionResult.PASS;
         }
 
         ItemStack stack = playerEntity.getStackInHand(hand);
+
         BlockState targetedBlock = world.getBlockState(blockPos);
 
         if (playerEntity.isSneaking() || !(stack.getItem() instanceof HoeItem)) {
@@ -43,7 +46,13 @@ public class ClearGrass {
     }
 
     private static boolean breakBlocksInRadius(PlayerEntity playerEntity, World world, Hand hand, BlockPos blockPos, BlockState targetedBlock, ItemStack stack) {
+
         boolean didWork = false;
+
+        if (!isValidInitialTarget(targetedBlock)) {
+            return false;
+        }
+
         int radius = getRadiusBasedOnMaterial(((HoeItem) stack.getItem()).getMaterial());
         boolean isTargetingCrop = targetedBlock.isIn(BlockTags.CROPS);
         boolean isTargetingNetherWart = targetedBlock.isOf(Blocks.NETHER_WART);
@@ -56,6 +65,10 @@ public class ClearGrass {
         }
 
         return didWork;
+    }
+
+    private static boolean isValidInitialTarget(BlockState targetedBlock) {
+        return targetedBlock.isIn(BlockTags.CROPS) || targetedBlock.isOf(Blocks.NETHER_WART) || targetedBlock.isIn(ModTags.Blocks.SCYTHE_BLOCKS);
     }
 
     private static int getRadiusBasedOnMaterial(ToolMaterial material) {
@@ -91,15 +104,27 @@ public class ClearGrass {
             return false;
         }
 
-        if (playerEntity instanceof ServerPlayerEntity serverPlayer) {
-            serverPlayer.interactionManager.tryBreakBlock(targetPos);
-        } else {
-            world.breakBlock(targetPos, true);
+        if (!world.canPlayerModifyAt(playerEntity, targetPos)) {
+            return false;
         }
 
+        if (world instanceof ServerWorld) {
+            List<ItemStack> drops = Block.getDroppedStacks(targetState, (ServerWorld) world, targetPos, world.getBlockEntity(targetPos), playerEntity, stack);
+
+            for (ItemStack drop : drops) {
+                Block.dropStack(world, targetPos, drop);
+            }
+        }
+
+        // Remove the block
+        world.breakBlock(targetPos, false);
+
+        // Damage the tool
         stack.damage(1, playerEntity, p -> p.sendToolBreakStatus(hand));
+
         return true;
     }
+
 
     private static boolean shouldBreakBlock(boolean isTargetingCrop, boolean isTargetingFullyGrownCrop, boolean isTargetingNetherWart, BlockState targetState) {
         if (isTargetingCrop && targetState.isIn(BlockTags.CROPS)) {
@@ -110,7 +135,5 @@ public class ClearGrass {
             return !isTargetingCrop && !isTargetingNetherWart && targetState.isIn(ModTags.Blocks.SCYTHE_BLOCKS);
         }
     }
-
-
 }
 
