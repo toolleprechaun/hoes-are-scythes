@@ -1,7 +1,7 @@
 package net.taylor.hoesarescythes;
 
 import net.fabricmc.api.ModInitializer;
-
+import net.minecraft.SharedConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,5 +14,8 @@ public class HoesAreScythes implements ModInitializer {
 		LOGGER.info("Initializing Hoes Are Scythes...");
 		ClearGrass.register();
 		LOGGER.info("Hoes Are Scythes is initialized!");
+		LOGGER.info("MC version: {}", SharedConstants.getGameVersion().name());
+
+
 	}
 }

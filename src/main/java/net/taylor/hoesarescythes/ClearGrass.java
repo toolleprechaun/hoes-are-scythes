@@ -1,14 +1,13 @@
 package net.taylor.hoesarescythes;
 
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.HoeItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolMaterial;
-import net.minecraft.item.ToolMaterials;
+import net.minecraft.item.Items;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.IntProperty;
@@ -20,120 +19,95 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.taylor.hoesarescythes.util.ModTags;
 
-import java.util.List;
-
 public class ClearGrass {
 
     public static void register() {
-        AttackBlockCallback.EVENT.register(ClearGrass::handleAttackBlock);
+        AttackBlockCallback.EVENT.register(ClearGrass::onAttackBlock);
     }
 
-    private static ActionResult handleAttackBlock(PlayerEntity playerEntity, World world, Hand hand, BlockPos blockPos, Direction direction) {
-        if (world.isClient) {
-            return ActionResult.PASS;
-        }
+    private static ActionResult onAttackBlock(PlayerEntity player, World world, Hand hand, BlockPos pos, Direction face) {
+        if (world.isClient) return ActionResult.PASS;
 
-        ItemStack stack = playerEntity.getStackInHand(hand);
+        ItemStack tool = player.getStackInHand(hand);
+        if (player.isSneaking() || !(tool.getItem() instanceof HoeItem)) return ActionResult.PASS;
 
-        BlockState targetedBlock = world.getBlockState(blockPos);
+        BlockState state = world.getBlockState(pos);
+        if (!isValidInitialTarget(state)) return ActionResult.PASS;
 
-        if (playerEntity.isSneaking() || !(stack.getItem() instanceof HoeItem)) {
-            return ActionResult.PASS;
-        }
-
-        boolean didWork = breakBlocksInRadius(playerEntity, world, hand, blockPos, targetedBlock, stack);
+        boolean didWork = breakBlocksInRadius(player, (ServerWorld) world, hand, pos, state, tool);
         return didWork ? ActionResult.SUCCESS : ActionResult.PASS;
     }
 
-    private static boolean breakBlocksInRadius(PlayerEntity playerEntity, World world, Hand hand, BlockPos blockPos, BlockState targetedBlock, ItemStack stack) {
-
+    private static boolean breakBlocksInRadius(PlayerEntity player, ServerWorld world, Hand hand,
+                                               BlockPos origin, BlockState initial, ItemStack tool) {
         boolean didWork = false;
 
-        if (!isValidInitialTarget(targetedBlock)) {
-            return false;
-        }
+        int radius = getRadiusForHoe(tool);
+        boolean targetingCrop = initial.isIn(BlockTags.CROPS);
+        boolean targetingNetherWart = initial.isOf(Blocks.NETHER_WART);
+        boolean targetingFullyGrown = isFullyGrownCrop(initial);
 
-        int radius = getRadiusBasedOnMaterial(((HoeItem) stack.getItem()).getMaterial());
-        boolean isTargetingCrop = targetedBlock.isIn(BlockTags.CROPS);
-        boolean isTargetingNetherWart = targetedBlock.isOf(Blocks.NETHER_WART);
-        boolean isTargetingFullyGrown = isFullyGrownCrop(targetedBlock);
-
-        for (int x = -radius; x <= radius; x++) {
-            for (int z = -radius; z <= radius; z++) {
-                didWork |= tryBreakBlock(playerEntity, world, hand, blockPos.add(x, 0, z), isTargetingCrop, isTargetingNetherWart, isTargetingFullyGrown, stack);
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                BlockPos target = origin.add(dx, 0, dz);
+                didWork |= tryBreakBlock(
+                        player, world, hand, target,
+                        targetingCrop, targetingNetherWart, targetingFullyGrown,
+                        tool
+                );
             }
         }
-
         return didWork;
     }
 
-    private static boolean isValidInitialTarget(BlockState targetedBlock) {
-        return targetedBlock.isIn(BlockTags.CROPS) || targetedBlock.isOf(Blocks.NETHER_WART) || targetedBlock.isIn(ModTags.Blocks.SCYTHE_BLOCKS);
+    private static boolean tryBreakBlock(PlayerEntity player, ServerWorld world, Hand hand, BlockPos pos,
+                                         boolean targetingCrop, boolean targetingNetherWart, boolean targetingFullyGrown,
+                                         ItemStack tool) {
+        BlockState state = world.getBlockState(pos);
+        if (state.isAir()) return false;
+        if (!player.canModifyAt(world, pos)) return false;
+        if (!shouldBreakBlock(targetingCrop, targetingFullyGrown, targetingNetherWart, state)) return false;
+
+        boolean broke = world.breakBlock(pos, true);
+        if (!broke) return false;
+
+        // Damage tool (1 per block)
+        tool.damage(1, player, hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
+        return true;
     }
 
-    private static int getRadiusBasedOnMaterial(ToolMaterial material) {
-        if (material == ToolMaterials.WOOD || material == ToolMaterials.STONE) {
-            return 1;
-        } else if (material == ToolMaterials.IRON) {
-            return 2;
-        } else if (material == ToolMaterials.DIAMOND) {
-            return 3;
-        } else {
-            return 4;
+    private static boolean isValidInitialTarget(BlockState state) {
+        return state.isIn(BlockTags.CROPS)
+                || state.isOf(Blocks.NETHER_WART)
+                || state.isIn(ModTags.Blocks.SCYTHE_BLOCKS);
+    }
+
+    private static boolean shouldBreakBlock(boolean targetingCrop, boolean targetingFullyGrown,
+                                            boolean targetingNetherWart, BlockState state) {
+        if (targetingCrop && state.isIn(BlockTags.CROPS)) {
+            return !targetingFullyGrown || isFullyGrownCrop(state);
         }
+        if (targetingNetherWart && state.isOf(Blocks.NETHER_WART)) {
+            return !targetingFullyGrown || isFullyGrownCrop(state);
+        }
+        return !targetingCrop && !targetingNetherWart && state.isIn(ModTags.Blocks.SCYTHE_BLOCKS);
     }
 
-    private static boolean isFullyGrownCrop(BlockState blockState) {
-        for (Property<?> property : blockState.getProperties()) {
-            if (!(property instanceof IntProperty ageProperty)) continue;
-            if (!property.getName().equals("age")) continue;
+    private static int getRadiusForHoe(ItemStack stack) {
+        if (stack.isOf(Items.WOODEN_HOE) || stack.isOf(Items.STONE_HOE)) return 1;
+        if (stack.isOf(Items.IRON_HOE)) return 2;
+        if (stack.isOf(Items.DIAMOND_HOE)) return 3;
+        return 4; // Netherite and others
+    }
 
-            int age = blockState.get(ageProperty);
-            int maxAge = ageProperty.getValues().stream().max(Integer::compareTo).orElse(0);
-            if (age == maxAge) {
-                return true;
+    private static boolean isFullyGrownCrop(BlockState state) {
+        for (Property<?> property : state.getProperties()) {
+            if (property instanceof IntProperty age && property.getName().equals("age")) {
+                int ageValue = state.get(age);
+                int maxAge = age.getValues().stream().max(Integer::compareTo).orElse(0);
+                return ageValue == maxAge;
             }
         }
         return false;
     }
-
-    private static boolean tryBreakBlock(PlayerEntity playerEntity, World world, Hand hand, BlockPos targetPos, boolean isTargetingCrop, boolean isTargetingNetherWart, boolean isTargetingFullyGrown, ItemStack stack) {
-        BlockState targetState = world.getBlockState(targetPos);
-
-        if (!shouldBreakBlock(isTargetingCrop, isTargetingFullyGrown, isTargetingNetherWart, targetState)) {
-            return false;
-        }
-
-        if (!world.canPlayerModifyAt(playerEntity, targetPos)) {
-            return false;
-        }
-
-        if (world instanceof ServerWorld) {
-            List<ItemStack> drops = Block.getDroppedStacks(targetState, (ServerWorld) world, targetPos, world.getBlockEntity(targetPos), playerEntity, stack);
-
-            for (ItemStack drop : drops) {
-                Block.dropStack(world, targetPos, drop);
-            }
-        }
-
-        // Remove the block
-        world.breakBlock(targetPos, false);
-
-        // Damage the tool
-        stack.damage(1, playerEntity, p -> p.sendToolBreakStatus(hand));
-
-        return true;
-    }
-
-
-    private static boolean shouldBreakBlock(boolean isTargetingCrop, boolean isTargetingFullyGrownCrop, boolean isTargetingNetherWart, BlockState targetState) {
-        if (isTargetingCrop && targetState.isIn(BlockTags.CROPS)) {
-            return !isTargetingFullyGrownCrop || isFullyGrownCrop(targetState);
-        } else if (isTargetingNetherWart && targetState.isOf(Blocks.NETHER_WART)) {
-            return !isTargetingFullyGrownCrop || isFullyGrownCrop(targetState);
-        } else {
-            return !isTargetingCrop && !isTargetingNetherWart && targetState.isIn(ModTags.Blocks.SCYTHE_BLOCKS);
-        }
-    }
 }
-

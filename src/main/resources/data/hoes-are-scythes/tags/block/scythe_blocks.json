@@ -3,13 +3,21 @@
   "values": [
     "minecraft:short_grass",
     "minecraft:tall_grass",
+    "minecraft:short_dry_grass",
+    "minecraft:tall_dry_grass",
     "minecraft:fern",
     "minecraft:large_fern",
+    "minecraft:bush",
     "minecraft:dead_bush",
     "minecraft:crimson_roots",
     "minecraft:warped_roots",
     "minecraft:nether_sprouts",
     "minecraft:sweet_berry_bush",
+    "minecraft:firefly_bush",
+    "minecraft:leaf_litter",
+    "minecraft:wildflowers",
+    "minecraft:pink_petals",
+    "#minecraft:small_flowers",
     "#minecraft:flowers"
   ]
 }

@@ -8,11 +8,10 @@ import net.taylor.hoesarescythes.HoesAreScythes;
 
 public class ModTags {
     public static class Blocks {
-        public static final TagKey<Block> SCYTHE_BLOCKS =
-                createTag("scythe_blocks");
+        public static final TagKey<Block> SCYTHE_BLOCKS = createTag();
 
-        private static TagKey<Block> createTag(String name) {
-            return TagKey.of(RegistryKeys.BLOCK, new Identifier(HoesAreScythes.MOD_ID, name));
+        private static TagKey<Block> createTag() {
+            return TagKey.of(RegistryKeys.BLOCK, Identifier.of(HoesAreScythes.MOD_ID, "scythe_blocks"));
         }
     }
 }
