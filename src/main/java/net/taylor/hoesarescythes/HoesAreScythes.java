@@ -1,5 +1,3 @@
-// net/taylor/hoesarescythes/HoesAreScythes.java
-
 package net.taylor.hoesarescythes;
 
 import net.fabricmc.api.ModInitializer;

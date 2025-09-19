@@ -69,13 +69,14 @@ public final class ClearGrass {
                                          ItemStack tool) {
         BlockState state = world.getBlockState(pos);
         if (state.isAir()) return false;
-        if (!player.canModifyAt(world, pos)) return false;
+        if (!player.getAbilities().allowModifyWorld) return false;
+        if (world.getServer().isSpawnProtected(world, pos, player)) return false;
         if (!shouldBreakBlock(targetingCrop, targetingFullyGrown, targetingNetherWart, state)) return false;
 
-        boolean broke = world.breakBlock(pos, !player.isCreative());
+        boolean broke = world.breakBlock(pos, !player.getAbilities().creativeMode);
         if (!broke) return false;
 
-        if (!player.isCreative() && tool.isDamageable()) {
+        if (!player.getAbilities().creativeMode && tool.isDamageable()) {
             tool.damage(1, player, hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
         }
         return true;

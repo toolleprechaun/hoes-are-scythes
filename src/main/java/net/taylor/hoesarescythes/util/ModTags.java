@@ -1,5 +1,3 @@
-// net/taylor/hoesarescythes/util/ModTags.java
-
 package net.taylor.hoesarescythes.util;
 
 import net.minecraft.block.Block;
