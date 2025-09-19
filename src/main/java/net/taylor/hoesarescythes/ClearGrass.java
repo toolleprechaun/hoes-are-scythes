@@ -1,3 +1,5 @@
+// net/taylor/hoesarescythes/ClearGrass.java
+
 package net.taylor.hoesarescythes;
 
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;

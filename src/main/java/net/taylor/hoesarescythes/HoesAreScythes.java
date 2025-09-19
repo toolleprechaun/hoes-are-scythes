@@ -1,3 +1,5 @@
+// net/taylor/hoesarescythes/HoesAreScythes.java
+
 package net.taylor.hoesarescythes;
 
 import net.fabricmc.api.ModInitializer;
@@ -14,8 +16,5 @@ public class HoesAreScythes implements ModInitializer {
 		LOGGER.info("Initializing Hoes Are Scythes...");
 		ClearGrass.register();
 		LOGGER.info("Hoes Are Scythes is initialized!");
-		LOGGER.info("MC version: {}", SharedConstants.getGameVersion().name());
-
-
 	}
 }
