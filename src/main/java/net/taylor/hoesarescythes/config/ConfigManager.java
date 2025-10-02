@@ -47,6 +47,7 @@ public final class ConfigManager {
             ModConfig def = new ModConfig();
             def.hoes.add(entry("minecraft:wooden_hoe", 1));
             def.hoes.add(entry("minecraft:stone_hoe", 1));
+            def.hoes.add(entry("minecraft:copper_hoe", 2));
             def.hoes.add(entry("minecraft:iron_hoe", 2));
             def.hoes.add(entry("minecraft:diamond_hoe", 3));
             def.hoes.add(entry("minecraft:netherite_hoe", 4));

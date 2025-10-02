@@ -27,7 +27,7 @@ public final class ClearGrass {
     }
 
     private static ActionResult onAttackBlock(PlayerEntity player, World world, Hand hand, BlockPos pos, net.minecraft.util.math.Direction face) {
-        if (world.isClient) return ActionResult.PASS;
+        if (world.isClient()) return ActionResult.PASS;
 
         ItemStack tool = player.getStackInHand(hand);
         if (player.isSneaking() || !(tool.getItem() instanceof HoeItem)) return ActionResult.PASS;

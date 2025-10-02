@@ -5,9 +5,9 @@
 	"name": "Hoes Are Scythes",
 	"description": "Quickly clear up grass, flowers, crops and more with a hoe!",
 	"authors": [
-		"Taylor"
+		"ToolLeprechaun"
 	],
-	"license": "LGPL-3.0-or-later",
+	"license": "MIT",
 	"icon": "assets/hoesarescythes/hoes-are-scythes-icon.png",
 	"environment": "*",
 	"entrypoints": {
@@ -23,7 +23,7 @@
 	},
 	"depends": {
 		"fabricloader": ">=0.16.0",
-		"minecraft": ">=1.21.2 <1.21.9",
+		"minecraft": "1.21.9",
 		"java": ">=21",
 		"fabric-api": "*"
 	}
